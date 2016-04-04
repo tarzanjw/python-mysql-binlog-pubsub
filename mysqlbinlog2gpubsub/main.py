@@ -5,11 +5,13 @@ from __future__ import print_function
 import logging
 import argparse
 import sys
-from mysqlbinlog2gpubsub import metadata
+import os
 
 
 __author__ = 'tarzan'
 _logger = logging.getLogger(__name__)
+
+logging.basicConfig()
 
 
 def _setup_arg_parser(argv):
@@ -20,7 +22,8 @@ def _setup_arg_parser(argv):
     Returns:
         argparse.Namespace: parsed argument
     """
-    parser = argparse.ArgumentParser(description=metadata.project)
+    parser = argparse.ArgumentParser(
+        description='MySQL binlog to Google Cloud Pub/Sub')
     parser.add_argument('conf',
                        help='configuration file for publishing')
 
@@ -34,11 +37,12 @@ def main(argv):
         argv (list): list of command line arguments
     """
     args = _setup_arg_parser(argv)
+    conf_file = args.conf
 
-    from mysqlbinlog2gpubsub import config
+    if conf_file:
+        os.environ['BINLOG2GPUBSUB_CONF_FILE'] = conf_file
+
     import mysqlbinlog2gpubsub
-
-    config.import_from_python_file(args.conf)
     mysqlbinlog2gpubsub.start_publishing()
 
 

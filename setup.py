@@ -236,14 +236,15 @@ setup_dict = dict(
     ],
     packages=find_packages(exclude=(TESTS_DIRECTORY,)),
     install_requires=[
-        'pymysqlblinker >= 1.1.1',
+        'mysqlbinlog2blinker',
         'gcloud >= 0.9.0',
+        'PyYAML',
     ] + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
     tests_require=[
-        'pytest==2.5.1',
-        'mock==1.0.1',
-        'flake8==2.1.0',
+        'pytest>=2.5.1',
+        'mock>=1.0.1',
+        'flake8>=2.1.0',
     ],
     cmdclass={'test': TestAllCommand},
     zip_safe=False,  # don't use eggs

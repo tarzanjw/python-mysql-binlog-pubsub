@@ -1,28 +1,43 @@
 # -*- coding: utf-8 -*-
 import logging
-import pymysqlblinker
-import pymysqlblinker.signals
 
+import mysqlbinlog2blinker
+import mysqlbinlog2blinker.signals
+from mysqlbinlog2gpubsub import filters
 
 __author__ = 'tarzan'
 _logger = logging.getLogger(__name__)
 
-@pymysqlblinker.signals.on_binlog_write
-@pymysqlblinker.signals.on_binlog_update
-@pymysqlblinker.signals.on_binlog_delete
-def on_binlog_event(event, schema, table):
-    data = event_filter.make_event_data(event)
-    if data:
-        meta, rows = data
-        pubsub.publish_rows(rows, meta)
-
 
 def start_publishing():
     from mysqlbinlog2gpubsub import config
-    pymysqlblinker.start_replication(
-        config.MASTER_MYSQL_DSN,
-        binlog_pos_storage_filename=config.BINLOG_POS_FILENAME,
-        only_schemas=config.REPLICATION_ONLY_SCHEMAS or None,
-        only_tables=config.REPLICATION_ONLY_TABLES or None,
-        connect_timeout=config.MASTER_CONNECT_TIMEOUT,
+    mysqlbinlog2blinker.start_replication(
+        mysql_settings=config.mysql_settings,
+        binlog_pos_memory=config.binlog_position_memory,
+        only_schemas=config.only_schemas,
+        only_tables=config.only_tables,
     )
+
+
+i = 0
+@mysqlbinlog2blinker.signals.on_binlog
+def limitor(event, stream):
+    global i
+    i += 1
+    if i >= 2:
+        raise SystemExit()
+
+
+@mysqlbinlog2blinker.signals.on_rows_inserted
+def on_rows_inserted(table_name, rows, meta):
+    filters.apply_filters(rows, meta)
+
+
+@mysqlbinlog2blinker.signals.on_rows_deleted
+def on_rows_deleted(table_name, rows, meta):
+    filters.apply_filters(rows, meta)
+
+
+@mysqlbinlog2blinker.signals.on_rows_updated
+def on_rows_updated(table_name, rows, meta):
+    filters.apply_filters(rows, meta)

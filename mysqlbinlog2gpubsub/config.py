@@ -1,33 +1,31 @@
 # -*- coding: utf-8 -*-
 import random
-import os
-import importlib.machinery
+import gcloud._helpers
+import yaml
 
 __author__ = 'tarzan'
 
-MASTER_MYSQL_DSN = None
-MASTER_CONNECT_TIMEOUT = 5
 
-BINLOG_POS_FILENAME = None
-BINLOG_POS_INTERVAL = 2.0
+mysql_settings = {
+    'host': 'localhost',
+    'port': 33060,
+    'user': 'binlog_publisher',
+    'passwd': 'EWwjGWf9U346',
+    'connect_timeout': 5,
+}
 
-REPLICATION_ONLY_SCHEMAS = None
-REPLICATION_ONLY_TABLES = None
+binlog_position_memory = ('test.binlog.pos', 2)
 
-SLAVE_SERVER_ID = random.randint(1000000000, 4294967295)
-REPLICATION_BLOCKING = True
-#
-# SCHEMA_NAME_MAPPINGS = dict()
-# TABLE_NAME_MAPPINGS = dict()
-#
-# TABLE_PREFIX = dict()
-# TABLE_PRIMARY_KEYS = dict()
-# TABLE_IGNORED_UPDATE_FIELDS = dict()
-#
-# PUBSUB_PROJECT_NAME = 'vnpapis'
+only_schemas = None
+only_tables = None
+
+schema_rename = dict()
+table_rename = dict()
+
+filters = dict()
 
 
-def import_from_dict(conf_dict):
+def _import_from_dict(conf_dict):
     """ Import settings from a dictionary
     Args:
         conf_dict (dict): settings to be imported
@@ -35,19 +33,17 @@ def import_from_dict(conf_dict):
     globals().update(conf_dict)
 
 
-def import_from_python_file(file):
-    """ parse a python file and import its properties as settings
-    Args:
-        file (str): path to python file
+def _import_from_yaml_file(yaml_file):
+    with open(yaml_file) as f:
+        conf = yaml.safe_load(f)
+    return _import_from_dict(conf)
 
-    Returns:
 
-    """
-    _conf_mod_loader = importlib.machinery.SourceFileLoader(
-        __package__ + '_conf_module',
-        file)
-    _conf_mod = _conf_mod_loader.load_module()
-    import_from_dict({
-        k: getattr(_conf_mod, k)
-        for k in dir(_conf_mod) if not k.startswith('_')
-    })
+def _load_config_from_environment():
+    import os
+
+    conf_file = os.environ['BINLOG2GPUBSUB_CONF_FILE']
+    _import_from_yaml_file(conf_file)
+
+
+_load_config_from_environment()

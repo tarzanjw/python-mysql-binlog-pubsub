@@ -1,0 +1,35 @@
+only_schemas:
+  - fs_hangnhat
+
+
+only_tables:
+  - users
+#  - orders_new
+
+
+schema_rename:
+  fs_hangnhat: vatgia
+
+
+table_rename:
+  vatgia:
+    users: user
+    orders_new: order
+
+
+filters:
+  vatgia.user:
+    column_prefix: use_
+    hide_columns: []
+    ignore_updated_columns: # ignore these fields in updated_values when check modification
+      - last_visited
+      - security
+      - key_active
+  vatgia.order:
+    column_prefix: ord_
+    hide_columns: # completetly are removed from updated_values and values
+      - balance
+      - secret_key
+    ignore_updated_columns: # ignore these fields in updated_values when check modification
+      - last_modified_time
+      - topics_count

@@ -1,0 +1,3 @@
+mysqlbinlog2blinker
+gcloud
+PyYAML
