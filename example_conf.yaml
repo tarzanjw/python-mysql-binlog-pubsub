@@ -1,0 +1,70 @@
+pubsub_project_name: '...' # google project name that owns pubsub topics
+
+mysql_settings: # dict, mysql connection information
+  host: ... # host
+  port: ... # port, default is 3306
+  user: ... # user
+  passwd: ... # password
+  connect_timeout: 5 # connection timeout, in seconds, default is 5
+
+
+binlog_position_memory: # the storage that stores last binlog position
+  - test.binlog.pos # file name
+  - 2 # in second: the interval where data will be saved into file
+
+only_schemas: # list of databases to listen binlog events, empty=all
+  - db1
+  - db2
+
+only_tables: # list of tables to listen binlog events, empty=all
+  - tbl2
+  - tbl3
+
+
+publishers: # list of publisher on each binlog event
+  publisher1: # publisher's name
+
+    # this is the topic name formation. It is a formation string with python
+    # syntax, can use data for : schema, table, action
+    topic_name: "%(schema)s.%(table)s.%(action)s"
+
+    signals: # the signal that publisher will subscribe. Empty=all
+      # each key is a table name, values is list/sublist of
+      # ['insert','update','delete']. Empty=all
+      db1.tbl2:
+        - update
+      db2.tbl3: []
+
+    schema_rename: # dict, mapping from database name to other name
+      db1: new_db1_name
+
+    table_rename: # 2 levels dict, mapping from table name to other name
+      new_db1_name:
+        tbl2: new_tbl2_name
+      db2:
+        tbl3: new_tbl3_name
+
+    # list of filter that applies on each row. The publisher will publish row
+    # that satisfies all the filters
+    filters:
+      new_db1_name.*: # regex, to match the table (after renaming) to apply filters
+        column_prefix: ... # rename the column (by removing prefix) for each row
+        hide_columns: [] # list of columns that will be removed from row
+        ignore_updated_columns: # ignore these fields in updated_values when check modification
+          - last_visited
+          - view_count
+      db2.new_tbl3_name:
+        column_prefix: tbl_
+        hide_columns: # completetly are removed from updated_values and values
+          - balance
+          - secret_key
+        ignore_updated_columns: # ignore these fields in updated_values when check modification
+          - last_modified_time
+          - topics_count
+
+    jwt: # JWT information
+      alg: RS256 # can be: RS256, RS384, RS512
+      key: |  # RSA private key to sign the data
+        -----BEGIN RSA PRIVATE KEY-----
+        MIICWwIBAAKBgQDdlatRjRjogo3WojgGHFHYLugdUWAY9iR3fy4arWNA1KoS8kVw33cJibXr8bvwUAUparCwlvdbH6dvEOfou0/gCFQsHUfQrSDv+MuSUMAe8jzKE4qW+jK+xQU9a03GUnKHkkle+Q0pX/g6jXZ7r1/xAK5Do2kQ+X5xK9cipRgEKwIDAQABAoGAD+onAtVye4ic7VR7V50DF9bOnwRwNXrARcDhq9LWNRrRGElESYYTQ6EbatXS3MCyjjX2eMhu/aF5YhXBwkppwxg+EOmXeh+MzL7Zh284OuPbkglAaGhV9bb6/5CpuGb1esyPbYW+Ty2PC0GSZfIXkXs76jXAu9TOBvD0ybc2YlkCQQDywg2R/7t3Q2OE2+yo382CLJdrlSLVROWKwb4tb2PjhY4XAwV8d1vy0RenxTB+K5Mu57uVSTHtrMK0GAtFr833AkEA6avx20OHo61Yela/4k5kQDtjEf1N0LfI+BcWZtxsS3jDM3i1Hp0KSu5rsCPb8acJo5RO26gGVrfAsDcIXKC+bQJAZZ2XIpsitLyPpuiMOvBbzPavd4gY6Z8KWrfYzJoI/Q9FuBo6rKwl4BFoToD7WIUS+hpkagwWiz+6zLoX1dbOZwJACmH5fSSjAkLRi54PKJ8TFUeOP15h9sQzydI8zJU+upvDEKZsZc/UhT/SySDOxQ4G/523Y0sz/OZtSWcol/UMgQJALesy++GdvoIDLfJX5GBQpuFgFenRiRDabxrE9MNUZ2aPFaFp+DyAe+b4nDwuJaW2LURbr8AEZga7oQj0uYxcYw==
+        -----END RSA PRIVATE KEY-----

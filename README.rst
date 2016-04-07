@@ -18,7 +18,7 @@ How it works?
 3. Pass the signal through list of filters (filters can be configured). For i.e:
    It will remove column name's prefix, remove some sensitive columns. Rename
    the schema or table etc,
-3. On each rows signal, make a JWT for it.
+3. On each row, make a JWT for it.
 4. Send the JWT value to the pubsub topic, topic's name can be configured.
 
 
@@ -30,14 +30,7 @@ How to use?
         mysqlbinlog2gpubsub test_conf.yaml
 
 
-    .. code-block:: python
+Configuration file
+------------------
 
-        from pymysqlblinker import start_replication
-
-        start_replication(
-            {
-                'host': 'localhost',
-                'user': 'root',
-            },
-            ('/path/to/file/that/remember/binlog/position', 2),
-        )
+Example file `example_conf.yaml <https://github.com/tarzanjw/python-mysql-binlog-pubsub/blob/master/example_conf.yaml`_
