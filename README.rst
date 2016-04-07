@@ -27,10 +27,10 @@ How to use?
 
     .. code-block:: shell
 
-        mysqlbinlog2gpubsub test_conf.yaml
+        mysqlbinlog2gpubsub_cli test_conf.yaml
 
 
 Configuration file
 ------------------
 
-Example file `example_conf.yaml <https://github.com/tarzanjw/python-mysql-binlog-pubsub/blob/master/example_conf.yaml`_
+Example file `example_conf.yaml <https://github.com/tarzanjw/python-mysql-binlog-pubsub/blob/master/example_conf.yaml>`_

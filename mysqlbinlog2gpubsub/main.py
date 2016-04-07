@@ -25,9 +25,10 @@ def _setup_arg_parser(argv):
         description='MySQL binlog to Google Cloud Pub/Sub')
     parser.add_argument('conf',
                         help='configuration file for publishing')
-    parser.add_argument('--log', '-l', default=None,
-                        help='INI file to setup logging')
-
+    parser.add_argument('--loglevel', '-l', default=None,
+                        help='log level for root')
+    parser.add_argument('--logconf', default=None,
+                        help='INI file log configuration')
     args = parser.parse_args(argv)
     return args
 
@@ -46,8 +47,9 @@ def main(argv):
     if conf_file:
         os.environ['BINLOG2GPUBSUB_CONF_FILE'] = conf_file
 
-    log_conf_file = args.log or _default_log_conf_file
-    logging.config.fileConfig(log_conf_file)
+    logging.config.fileConfig(args.logconf or _default_log_conf_file)
+    if args.loglevel:
+        logging.root.setLevel(logging.getLevelName(args.loglevel.upper()))
 
     import mysqlbinlog2gpubsub
     mysqlbinlog2gpubsub.start_publishing()
