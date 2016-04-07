@@ -239,6 +239,7 @@ setup_dict = dict(
         'mysqlbinlog2blinker',
         'gcloud >= 0.9.0',
         'PyYAML',
+        'python-jose',
     ] + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
     tests_require=[

@@ -6,15 +6,11 @@ import yaml
 __author__ = 'tarzan'
 
 
-mysql_settings = {
-    'host': 'localhost',
-    'port': 33060,
-    'user': 'binlog_publisher',
-    'passwd': 'EWwjGWf9U346',
-    'connect_timeout': 5,
-}
+pubsub_project_name = None
 
-binlog_position_memory = ('test.binlog.pos', 2)
+mysql_settings = dict()
+
+binlog_position_memory = (None, 2)
 
 only_schemas = None
 only_tables = None
@@ -22,7 +18,7 @@ only_tables = None
 schema_rename = dict()
 table_rename = dict()
 
-filters = dict()
+publishers = {}
 
 
 def _import_from_dict(conf_dict):

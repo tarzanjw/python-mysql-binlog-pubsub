@@ -10,24 +10,6 @@ __author__ = 'Tarzan'
 _logger = logging.getLogger(__name__)
 
 
-def rename_schema(schema):
-    """ Map schema name to a new name
-    Args:
-        schema (str): name from
-
-    Returns:
-        str: to name
-    """
-    return config.schema_rename.get(schema, schema)
-
-
-def rename_table(schema, table):
-    return config.table_rename.get(schema, {}).get(table, table)
-
-
-_table_filters = {}
-
-
 def get_filters_for(table_name):
     """ Get list of filters for a table
 
@@ -50,28 +32,60 @@ def get_filters_for(table_name):
         return filters
 
 
-def apply_filters(rows, meta):
-    """ Apply filters on rows and meta
+class Filters(object):
+    """ Handle a filters chain """
+    def __init__(self, filters_conf):
+        self._filters_conf = filters_conf
+        self._table_filters = {}
+        self._filters_by_pattern = {}
 
-    Args:
-        rows (list[dict]): rows
-        meta (dict): meta
+    def _get_filters_for_pattern(self, pattern):
+        try:
+            return self._filters_by_pattern[pattern]
+        except KeyError:
+            filters = []
+            for fname, fconf in self._filters_conf[pattern].items():
+                filters.append(factory.create_filter(fname, fconf))
+            self._filters_by_pattern[pattern] = filters
+            return filters
 
-    Every changes that happen on rows and meta will remain
-    """
-    # schema name mapping
-    meta['schema'] = rename_schema(meta['schema'])
-    meta['table'] = rename_table(meta['schema'], meta['table'])
+    def get_filters_for_table(self, table_name):
+        try:
+            return self._table_filters[table_name]
+        except KeyError:
+            filters = []
+            for pattern, filters_conf in self._filters_conf.items():
+                if re.match('^%s$' % pattern, table_name):
+                    filters.extend(self._get_filters_for_pattern(pattern))
+            self._table_filters[table_name] = filters
+            return filters
 
-    table_name = '%s.%s' % (meta['schema'], meta['table'])
-    for f in get_filters_for(table_name):
-        for i in reversed(range(len(rows))):
-            if not f(rows[i]):
-                del rows[i]
-        if not rows:
-            return False
+    def apply(self, rows, meta):
+        """ Apply filters on rows and meta
 
-    from pprint import pprint
-    pprint(meta)
-    pprint(rows)
-    return True
+        Args:
+            rows (list[dict]): rows
+            meta (dict): meta
+
+        Every changes that happen on rows and meta will remain
+        """
+        table_name = '%s.%s' % (meta['schema'], meta['table'])
+        for f in self.get_filters_for_table(table_name):
+            for i in reversed(range(len(rows))):
+                if not f(rows[i]):
+                    del rows[i]
+            if not rows:
+                return False
+        return True
+
+    def yield_rows(self, rows, meta):
+        """ Yield a list of rows that satisfy the filters
+
+        Returns:
+            list[dict]
+        """
+        table_name = '%s.%s' % (meta['schema'], meta['table'])
+        filters = self.get_filters_for_table(table_name)
+        for row in rows:
+            if all([f(row) for f in filters]):
+                yield row

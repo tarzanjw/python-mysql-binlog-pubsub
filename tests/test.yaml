@@ -1,35 +1,66 @@
+pubsub_project_name: vnpapis
+
+mysql_settings:
+  host: 127.0.0.1
+  port: 33060
+  user: binlog_publisher
+  passwd: EWwjGWf9U346
+  connect_timeout: 5
+
+
+binlog_position_memory:
+  - test.binlog.pos
+  - 2
+
 only_schemas:
   - fs_hangnhat
 
 
 only_tables:
   - users
-#  - orders_new
+  - orders_new
 
 
-schema_rename:
-  fs_hangnhat: vatgia
 
+publishers:
+  all:
+    topic_name: "%(schema)s.%(table)s.%(action)s"
 
-table_rename:
-  vatgia:
-    users: user
-    orders_new: order
+    signals:
+      fs_hangnhat.users:
+        - update
+#      fs_hangnhat.orders_new:
+#        - insert
+#        - delete
 
+    schema_rename:
+      fs_hangnhat: vatgia
 
-filters:
-  vatgia.user:
-    column_prefix: use_
-    hide_columns: []
-    ignore_updated_columns: # ignore these fields in updated_values when check modification
-      - last_visited
-      - security
-      - key_active
-  vatgia.order:
-    column_prefix: ord_
-    hide_columns: # completetly are removed from updated_values and values
-      - balance
-      - secret_key
-    ignore_updated_columns: # ignore these fields in updated_values when check modification
-      - last_modified_time
-      - topics_count
+    table_rename:
+      vatgia:
+        users: user
+        orders_new: order
+
+    filters:
+      vatgia.user:
+        column_prefix: use_
+        hide_columns: []
+        ignore_updated_columns: # ignore these fields in updated_values when check modification
+          - last_visited
+          - security
+          - key_active
+      vatgia.order:
+        column_prefix: ord_
+        hide_columns: # completetly are removed from updated_values and values
+          - balance
+          - secret_key
+        ignore_updated_columns: # ignore these fields in updated_values when check modification
+          - last_modified_time
+          - topics_count
+
+    jwt:
+      alg: RS256
+      key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIICWwIBAAKBgQDdlatRjRjogo3WojgGHFHYLugdUWAY9iR3fy4arWNA1KoS8kVw33cJibXr8bvwUAUparCwlvdbH6dvEOfou0/gCFQsHUfQrSDv+MuSUMAe8jzKE4qW+jK+xQU9a03GUnKHkkle+Q0pX/g6jXZ7r1/xAK5Do2kQ+X5xK9cipRgEKwIDAQABAoGAD+onAtVye4ic7VR7V50DF9bOnwRwNXrARcDhq9LWNRrRGElESYYTQ6EbatXS3MCyjjX2eMhu/aF5YhXBwkppwxg+EOmXeh+MzL7Zh284OuPbkglAaGhV9bb6/5CpuGb1esyPbYW+Ty2PC0GSZfIXkXs76jXAu9TOBvD0ybc2YlkCQQDywg2R/7t3Q2OE2+yo382CLJdrlSLVROWKwb4tb2PjhY4XAwV8d1vy0RenxTB+K5Mu57uVSTHtrMK0GAtFr833AkEA6avx20OHo61Yela/4k5kQDtjEf1N0LfI+BcWZtxsS3jDM3i1Hp0KSu5rsCPb8acJo5RO26gGVrfAsDcIXKC+bQJAZZ2XIpsitLyPpuiMOvBbzPavd4gY6Z8KWrfYzJoI/Q9FuBo6rKwl4BFoToD7WIUS+hpkagwWiz+6zLoX1dbOZwJACmH5fSSjAkLRi54PKJ8TFUeOP15h9sQzydI8zJU+upvDEKZsZc/UhT/SySDOxQ4G/523Y0sz/OZtSWcol/UMgQJALesy++GdvoIDLfJX5GBQpuFgFenRiRDabxrE9MNUZ2aPFaFp+DyAe+b4nDwuJaW2LURbr8AEZga7oQj0uYxcYw==
+        -----END RSA PRIVATE KEY-----

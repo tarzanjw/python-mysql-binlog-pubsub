@@ -74,10 +74,11 @@ class VerifyChangingFilter(BaseFilter):
         if not self._ignore_columns:
             return True
         updated_values = row.get('updated_values', None)  # type: dict
+
         if updated_values is None:
             return True
 
-        return set(updated_values.keys()).issubset(self._ignore_columns)
+        return not set(updated_values.keys()).issubset(self._ignore_columns)
 
 
 register_filter('column_prefix', ColumnPrefixFilter)

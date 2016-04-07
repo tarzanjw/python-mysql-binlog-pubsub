@@ -17,16 +17,16 @@ schema_name_mapping: # schema renaming
   schema1: s1,
   schema2: s2,
 
-filters: # filters on each table
-  schema1.table1: # table full name
-    rename: 't2', # table renaming
-    column_prefix: 'abc_' # remove column prefix
-    hide_columns: # completetly are removed from updated_values and values
-      - balance
-      - secret_key
-    ignore_updated_columns: # ignore these fields in updated_values when check modification
-      - last_modified_time
-      - topics_count
-
-pubsub_publishing: # get topic name from table, after be filtered
-  "regex for `schema.table`": "formation, include schema, table, action "
+publishers:
+  all:
+    topic_name: "%(schema)s.%(table)s.%(type)s"
+    filters: # filters on each table
+      schema1.table1: # table full name
+        rename: 't2', # table renaming
+        column_prefix: 'abc_' # remove column prefix
+        hide_columns: # completetly are removed from updated_values and values
+          - balance
+          - secret_key
+        ignore_updated_columns: # ignore these fields in updated_values when check modification
+          - last_modified_time
+          - topics_count

@@ -1,3 +1,4 @@
 mysqlbinlog2blinker
 gcloud
 PyYAML
+python-jose
