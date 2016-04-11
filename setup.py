@@ -235,6 +235,11 @@ setup_dict = dict(
         'Topic :: System :: Software Distribution',
     ],
     packages=find_packages(exclude=(TESTS_DIRECTORY,)),
+    package_data={
+        metadata.package: [
+        '%s/*.ini' % CODE_DIRECTORY,
+        '%s/*.conf' % CODE_DIRECTORY,
+    ]},
     install_requires=[
         'mysqlbinlog2blinker',
         'gcloud >= 0.9.0',

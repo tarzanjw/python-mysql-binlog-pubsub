@@ -1,0 +1,3 @@
+include mysqlbinlog2gpubsub/*.py
+include mysqlbinlog2gpubsub/*.conf
+include mysqlbinlog2gpubsub/*.ini

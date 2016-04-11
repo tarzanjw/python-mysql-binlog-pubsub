@@ -27,13 +27,16 @@ def _setup_arg_parser(argv):
                         help='configuration file for publishing')
     parser.add_argument('--loglevel', '-l', default=None,
                         help='log level for root')
-    parser.add_argument('--logconf', default=None,
+
+    if os.path.isfile('logging.ini'):
+        _log_file = 'logging.ini'
+    else:
+        _log_file = None
+
+    parser.add_argument('--logconf', default=_log_file,
                         help='INI file log configuration')
     args = parser.parse_args(argv)
     return args
-
-
-_default_log_conf_file = os.path.join(os.path.dirname(__file__), 'logging.ini')
 
 
 def main(argv):
@@ -47,7 +50,11 @@ def main(argv):
     if conf_file:
         os.environ['BINLOG2GPUBSUB_CONF_FILE'] = conf_file
 
-    logging.config.fileConfig(args.logconf or _default_log_conf_file)
+    if args.logconf:
+        logging.config.fileConfig(args.logconf, disable_existing_loggers=False)
+    else:
+        logging.basicConfig()
+
     if args.loglevel:
         logging.root.setLevel(logging.getLevelName(args.loglevel.upper()))
 
