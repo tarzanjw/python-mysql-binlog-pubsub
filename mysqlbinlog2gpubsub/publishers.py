@@ -80,11 +80,14 @@ class Publisher(object):
             for table_name, actions in self.signals_conf.items():
                 actions = actions or ['insert', 'update', 'delete']
                 if 'insert' in actions:
-                    signals.rows_inserted.connect(self.on_rows_signal)
+                    signals.rows_inserted.connect(self.on_rows_signal,
+                                                  sender=table_name)
                 if 'update' in actions:
-                    signals.rows_updated.connect(self.on_rows_signal)
+                    signals.rows_updated.connect(self.on_rows_signal,
+                                                 sender=table_name)
                 if 'delete' in actions:
-                    signals.rows_deleted.connect(self.on_rows_signal)
+                    signals.rows_deleted.connect(self.on_rows_signal,
+                                                 sender=table_name)
         else:
             signals.rows_inserted.connect(self.on_rows_signal)
             signals.rows_updated.connect(self.on_rows_signal)
