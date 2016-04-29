@@ -18,6 +18,8 @@ only_tables = None
 schema_rename = dict()
 table_rename = dict()
 
+default_publisher_conf = {}
+
 publishers = {}
 
 

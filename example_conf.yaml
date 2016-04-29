@@ -21,6 +21,13 @@ only_tables: # list of tables to listen binlog events, empty=all
   - tbl3
 
 
+default_publisher_conf: # default configuration for each publisher
+  schema_rename:
+  table_rename:
+  filters:
+  jwt:
+
+
 publishers: # list of publisher on each binlog event
   publisher1: # publisher's name
 
@@ -47,6 +54,7 @@ publishers: # list of publisher on each binlog event
     # list of filter that applies on each row. The publisher will publish row
     # that satisfies all the filters
     filters:
+
       new_db1_name.*: # regex, to match the table (after renaming) to apply filters
         column_prefix: ... # rename the column (by removing prefix) for each row
         hide_columns: [] # list of columns that will be removed from row

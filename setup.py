@@ -18,9 +18,10 @@ _logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.abspath('.'))
 
 ## Constants
-CODE_DIRECTORY = 'mysqlbinlog2gpubsub'
-DOCS_DIRECTORY = 'docs'
-TESTS_DIRECTORY = 'tests'
+_here = os.path.dirname(__file__)
+CODE_DIRECTORY = os.path.join(_here, 'mysqlbinlog2gpubsub')
+DOCS_DIRECTORY = os.path.join(_here, 'docs')
+TESTS_DIRECTORY = os.path.join(_here, 'tests')
 PYTEST_FLAGS = ['--doctest-modules']
 
 # Import metadata. Normally this would just be:
