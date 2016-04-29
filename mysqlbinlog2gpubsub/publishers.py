@@ -137,10 +137,31 @@ _publishers = dict()  # type: dict[str, Publisher]
 
 def init_publishers():
     """Read configuration and initialize publishers"""
-    global _publishers  # type: dict[str, Publisher]
+    global _publishers  # type: dict
+
+    def _merge_publisher_conf(conf, default):
+        """ Merge default publisher configuration to a specific conf
+
+        Args:
+            conf (dict[str, dict]):
+            default (dict[str, dict):
+
+        Returns:
+
+        """
+        conf = conf.copy()
+        conf['schema_rename'].update(default['schema_rename'])
+        conf['table_rename'].update(default['table_rename'])
+        conf['filters'].update(default['filters'])
+        conf['jwt'].update(default['jwt'])
+        return conf
+
+    default_publisher_conf = config.default_publisher_conf
 
     for p_name, p_conf in config.publishers.items():
-        _publishers[p_name] = Publisher(p_name, **p_conf)
+        _publishers[p_name] = Publisher(
+            p_name,
+            **_merge_publisher_conf(p_conf, default_publisher_conf))
 
     for p in _publishers.values():
         p.start()
