@@ -3,6 +3,10 @@
 import json
 import logging
 
+import collections
+
+import re
+
 import gcloud.pubsub
 import jose.jwk
 import jose.jws
@@ -48,8 +52,12 @@ class Publisher(object):
         self.__name__ = name
         self.topic_name_pattern = topic_name
         self.signals_conf = signals
-        self.schema_rename = schema_rename or dict()
-        self.table_rename = table_rename or dict()
+
+        self.schema_rename = schema_rename
+        self._schema_new_names = dict()  # type: dict[str, str]
+        self.table_rename = table_rename
+        self._table_new_names = dict()  # type: dict[tuple(str, str), str]
+
         self.filters = _filters.Filters(filters or {})
         self.pubsub_client = gcloud.pubsub.Client(
             project=config.pubsub_project_name)
@@ -74,7 +82,6 @@ class Publisher(object):
             self.pubsub_topics[topic_name] = topic
             return topic
 
-
     def _bind_to_rows_signals(self):
         if self.signals_conf:
             for table_name, actions in self.signals_conf.items():
@@ -93,18 +100,79 @@ class Publisher(object):
             signals.rows_updated.connect(self.on_rows_signal)
             signals.rows_deleted.connect(self.on_rows_signal)
 
+    def _unbind_to_rows_signals(self):
+        if self.signals_conf:
+            for table_name, actions in self.signals_conf.items():
+                actions = actions or ['insert', 'update', 'delete']
+                if 'insert' in actions:
+                    signals.rows_inserted.disconnect(self.on_rows_signal,
+                                                  sender=table_name)
+                if 'update' in actions:
+                    signals.rows_updated.disconnect(self.on_rows_signal,
+                                                 sender=table_name)
+                if 'delete' in actions:
+                    signals.rows_deleted.disconnect(self.on_rows_signal,
+                                                 sender=table_name)
+        else:
+            signals.rows_inserted.disconnect(self.on_rows_signal)
+            signals.rows_updated.disconnect(self.on_rows_signal)
+            signals.rows_deleted.disconnect(self.on_rows_signal)
+
     def start(self):
         """Start listening signals"""
         self._bind_to_rows_signals()
 
     def stop(self):
         """Stop listening signals"""
-        pass
+        self._unbind_to_rows_signals()
+
+    def _rename_schema(self, schema):
+        """ Rename a schema name and return new name
+
+        Args:
+            schema (str): schema nae
+
+        Returns:
+            str
+        """
+        try:
+            return self._schema_new_names[schema]
+        except KeyError:
+            new_name = schema
+            for pattern, repl in self.schema_rename.items():
+                new_name, subs_made = re.subn(pattern, repl, schema)
+                if subs_made:
+                    break
+
+            self._schema_new_names[schema] = new_name
+            return new_name
+
+    def _rename_table(self, schema, table):
+        """ Rename a table and rereturn new name
+
+        Args:
+            schema (str): schema name (the new one)
+            table (str): table name
+
+        Returns:
+            str
+        """
+        try:
+            return self._table_new_names[(schema, table)]
+        except KeyError:
+            new_name = table
+            _rules = self.table_rename.get(schema, {})
+            for pattern, repl in _rules.items():
+                new_name, subs_made = re.subn(pattern, repl, table)
+                if subs_made:
+                    break
+
+            self._table_new_names[(schema, table)] = new_name
+            return new_name
 
     def on_rows_signal(self, table_name, rows, meta):
-        meta['schema'] = self.schema_rename.get(meta['schema'], meta['schema'])
-        meta['table'] = self.table_rename.get(meta['schema'], {}).\
-            get(meta['table'], meta['table'])
+        meta['schema'] = self._rename_schema(meta['schema'])
+        meta['table'] = self._rename_table(meta['schema'], meta['table'])
 
         for row in self.filters.yield_rows(rows, meta):
             self.publish_row_to_pubsub(row, meta)
@@ -121,11 +189,12 @@ class Publisher(object):
 
         # make row is json competible
         row = json.loads(json_dumps(row))
-        _logger.info('Publishing %s.%s.%s#%s' % (
+        _logger.info('Publishing %s.%s.%s#%s to %s' % (
             meta['schema'],
             meta['table'],
             meta['action'],
             row['keys'],
+            topic.name
         ))
 
         msg_data = self._make_jwt(row, meta)
@@ -150,10 +219,14 @@ def init_publishers():
 
         """
         conf = conf.copy()
-        conf['schema_rename'].update(default['schema_rename'])
-        conf['table_rename'].update(default['table_rename'])
-        conf['filters'].update(default['filters'])
-        conf['jwt'].update(default['jwt'])
+        conf.setdefault('schema_rename', {})
+        conf.setdefault('table_rename', {})
+        conf.setdefault('filters', {})
+        conf.setdefault('jwt', {})
+        conf['schema_rename'].update(default.get('schema_rename', {}))
+        conf['table_rename'].update(default.get('table_rename', {}))
+        conf['filters'].update(default.get('filters', {}))
+        conf['jwt'].update(default.get('jwt', {}))
         return conf
 
     default_publisher_conf = config.default_publisher_conf
