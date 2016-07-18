@@ -36,3 +36,7 @@ Configuration file
 ------------------
 
 Example file `example_conf.yaml <https://github.com/tarzanjw/python-mysql-binlog-pubsub/blob/master/example_conf.yaml>`_
+
+.. image:: https://badges.gitter.im/tarzanjw/python-mysql-binlog-pubsub.svg
+   :alt: Join the chat at https://gitter.im/tarzanjw/python-mysql-binlog-pubsub
+   :target: https://gitter.im/tarzanjw/python-mysql-binlog-pubsub?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
